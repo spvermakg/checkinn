@@ -145,7 +145,6 @@ The API will be available at `http://localhost:8080`.
 - [ ] **Date Availability Search** — Filter by date range using booking and blocked-date data
 - [ ] **Rating Filters** — Filter and sort listings by average rating
 - [ ] **Flyway Migrations** — Replace `create-drop` and `data.sql` with versioned migrations
-- [ ] **N+1 Optimization** — `@EntityGraph` for efficient query loading
 - [ ] **Dashboards** — Guest and host dashboard endpoints
 - [ ] **Notifications** — Booking and review notification system
 

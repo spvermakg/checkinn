@@ -12,6 +12,6 @@ public class LoginRequestDTO {
     private String email;
 
     @NotBlank(message = "Password cannot be empty")
-    @Size(min = 6, message = "Password must be at least 6 character long") // TODO: Add Pattern for regex based validation
+    @Size(min = 6, message = "Password must be at least 6 character long")
     private String password;
 }
