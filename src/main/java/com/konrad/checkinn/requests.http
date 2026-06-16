@@ -1,0 +1,366 @@
+### ===========================
+### AUTH - Registration & Login
+### ===========================
+
+### Register Guest User
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "mobileNumber": "1234567890",
+  "email": "john@example.com",
+  "password": "Test@1234"
+}
+
+### Register Host User
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Jane Host",
+  "mobileNumber": "1234567898",
+  "email": "jane@example.com",
+  "password": "Test@1234",
+  "roles": ["HOST"]
+}
+
+### Login as Host (captures token automatically)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane@example.com",
+  "password": "Test@1234"
+}
+
+> {%
+    client.global.set("auth_token", response.body.token);
+    client.log("Token captured: " + response.body.token);
+%}
+
+### Login as Guest (captures token)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "Test@1234"
+}
+
+> {%
+    client.global.set("guest_token", response.body.token);
+    client.log("Guest token captured: " + response.body.token);
+%}
+
+### ===========================
+### AMENITIES - Fetch available
+### ===========================
+
+### Get All Amenities
+GET http://localhost:8080/api/v1/listings/amenities
+Authorization: Bearer {{auth_token}}
+
+### ===========================
+### LISTINGS - CRUD Operations
+### ===========================
+
+### Create Listing 1 (Beach House) — run "Login as Host" first
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Cozy Beach House",
+  "address": {
+    "houseNumber": "123",
+    "streetAddress": "Ocean Drive",
+    "state": "Maharashtra",
+    "country": "India",
+    "pincode": "400001"
+  },
+  "description": "A beautiful beach house with ocean views",
+  "listingType": "HOUSE",
+  "price": 2500.00,
+  "amenityIds": [1, 2, 3, 4],
+  "maxGuest": 6
+}
+
+> {%
+    client.global.set("listing_id_1", response.body.id);
+    client.log("Listing 1 created with ID: " + response.body.id);
+%}
+
+### Create Listing 2 (City Apartment)
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Modern City Apartment",
+  "address": {
+    "houseNumber": "456",
+    "streetAddress": "MG Road",
+    "state": "Karnataka",
+    "country": "India",
+    "pincode": "560001"
+  },
+  "description": "Stylish apartment in the heart of the city",
+  "listingType": "FLAT",
+  "price": 1500.00,
+  "amenityIds": [1, 5, 6, 8],
+  "maxGuest": 3
+}
+
+> {%
+    client.global.set("listing_id_2", response.body.id);
+    client.log("Listing 2 created with ID: " + response.body.id);
+%}
+
+### Create Listing 3 (Mountain Villa)
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Mountain View Villa",
+  "address": {
+    "houseNumber": "789",
+    "streetAddress": "Hill Road",
+    "state": "Himachal Pradesh",
+    "country": "India",
+    "pincode": "175131"
+  },
+  "description": "Peaceful villa with mountain views and fireplace",
+  "listingType": "HOUSE",
+  "price": 5000,
+  "amenityIds": [1, 2, 6, 7],
+  "maxGuest": 8
+}
+
+> {%
+    client.global.set("listing_id_3", response.body.id);
+    client.log("Listing 3 created with ID: " + response.body.id);
+%}
+
+### Get Listing by ID
+GET http://localhost:8080/api/v1/listings/{{listing_id_1}}
+Authorization: Bearer {{auth_token}}
+
+### Get All Listings (paginated)
+GET http://localhost:8080/api/v1/listings?page=0&size=10&sort=price,asc
+Authorization: Bearer {{auth_token}}
+
+### Update Listing 1 (PATCH semantics)
+PATCH http://localhost:8080/api/v1/listings/{{listing_id_1}}
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Luxury Beach House - Renovated",
+  "price": 3500.00,
+  "amenityIds": [1, 2, 3, 4, 5, 8]
+}
+
+### Soft Delete Listing 3
+DELETE http://localhost:8080/api/v1/listings/{{listing_id_3}}
+Authorization: Bearer {{auth_token}}
+
+### Verify Deleted Listing Returns 404
+GET http://localhost:8080/api/v1/listings/{{listing_id_3}}
+Authorization: Bearer {{auth_token}}
+
+### ===========================
+### PHOTOS - Upload & Manage
+### ===========================
+
+### Upload Photo to Listing 1 (primary)
+POST http://localhost:8080/api/v1/listings/{{listing_id_1}}/photos/
+Authorization: Bearer {{auth_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="beach.jpg"
+Content-Type: image/jpeg
+
+< ./testImage/beach.jpg
+--boundary
+Content-Disposition: form-data; name="photoUploadRequestDTO"
+Content-Type: application/json
+
+{"photoTitle": "Beach Front View", "isPrimary": true}
+--boundary--
+
+> {%
+        client.global.set("photo_id_1", response.body.id);
+        client.log("Photo 1 uploaded with ID: " + response.body.id);
+    %}
+
+### Upload Second Photo to Listing 1
+POST http://localhost:8080/api/v1/listings/{{listing_id_1}}/photos/
+Authorization: Bearer {{auth_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="interior.jpg"
+Content-Type: image/jpeg
+
+< ./testImage/interior.jpg
+--boundary
+Content-Disposition: form-data; name="photoUploadRequestDTO"
+Content-Type: application/json
+
+{"photoTitle": "Living Room Interior", "isPrimary": false}
+--boundary--
+
+> {%
+    client.global.set("photo_id_2", response.body.id);
+    client.log("Photo 2 uploaded with ID: " + response.body.id);
+%}
+
+### Set Photo 2 as Primary
+PATCH http://localhost:8080/api/v1/listings/{{listing_id_1}}/photos/{{photo_id_2}}
+Authorization: Bearer {{auth_token}}
+
+### Delete Photo 1
+DELETE http://localhost:8080/api/v1/listings/{{listing_id_1}}/photos/{{photo_id_1}}
+Authorization: Bearer {{auth_token}}
+
+### ===========================
+### SEARCH & FILTERING
+### ===========================
+
+### Search — No Filters (returns all active listings)
+GET http://localhost:8080/api/v1/listings/search?page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — By State
+GET http://localhost:8080/api/v1/listings/search?state=Maharashtra&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — By Country
+GET http://localhost:8080/api/v1/listings/search?country=India&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — By Listing Type
+GET http://localhost:8080/api/v1/listings/search?listingType=FLAT&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — By Price Range
+GET http://localhost:8080/api/v1/listings/search?minPrice=1000&maxPrice=3000&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — By Minimum Guests
+GET http://localhost:8080/api/v1/listings/search?minGuests=5&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — By Amenities (WiFi + Kitchen)
+GET http://localhost:8080/api/v1/listings/search?amenityIds=1&amenityIds=2&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — Combined Filters
+GET http://localhost:8080/api/v1/listings/search?state=Maharashtra&minPrice=1000&maxPrice=5000&minGuests=4&amenityIds=1&amenityIds=2&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — Sort by Price Ascending
+GET http://localhost:8080/api/v1/listings/search?page=0&size=10&sort=price,asc
+Authorization: Bearer {{auth_token}}
+
+### Search — Sort by Price Descending
+GET http://localhost:8080/api/v1/listings/search?page=0&size=10&sort=price,desc
+Authorization: Bearer {{auth_token}}
+
+### Search — No Results Expected (non-existent city)
+GET http://localhost:8080/api/v1/listings/search?state=Atlantis&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### Search — Deleted Listing Should Not Appear
+GET http://localhost:8080/api/v1/listings/search?state=Himachal Pradesh&page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+### ===========================
+### EDGE CASES & ERROR HANDLING
+### ===========================
+
+### Create Listing Without Auth
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Listing",
+  "price": 1000.00
+}
+
+### Create Listing as Guest (should return 403)
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+Authorization: Bearer {{guest_token}}
+
+{
+  "title": "Guest Trying to Host",
+  "address": {
+    "houseNumber": "123",
+    "streetAddress": "Street",
+    "state": "Delhi",
+    "country": "India",
+    "pincode": "110001"
+  },
+  "description": "This should fail",
+  "listingType": "FLAT",
+  "price": 1000.00,
+  "amenityIds": [
+    1
+  ],
+  "maxGuest": 2
+}
+
+### Create Listing with Invalid Amenity ID (should return error)
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Bad Amenity Test",
+  "address": {
+    "houseNumber": "123",
+    "streetAddress": "Street",
+    "state": "Delhi",
+    "country": "India",
+    "pincode": "110001"
+  },
+  "description": "Testing invalid amenity",
+  "listingType": "FLAT",
+  "price": 1000.00,
+  "amenityIds": [999],
+  "maxGuest": 2
+}
+
+### Create Listing with Validation Errors (empty body)
+POST http://localhost:8080/api/v1/listings
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+
+}
+
+### Get Non-Existent Listing (should return 404)
+GET http://localhost:8080/api/v1/listings/99999
+Authorization: Bearer {{auth_token}}
+
+### Empty Registration (validation test)
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+
+}
+
+### Empty Login (validation test)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+
+}
+

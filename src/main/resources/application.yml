@@ -1,0 +1,27 @@
+spring:
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:never}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/checkinn
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: true
+    defer-datasource-initialization: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET_KEY:my-super-secret-key-that-is-at-least-32-chars-long}
+    expiration: ${JWT_EXPIRATION_MS:3600000}
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:default_minio_access_key}
+  secret-key: ${MINIO_SECRET_KEY:default_minio_secret_key}
+  bucket-name: ${MINIO_BUCKET:my-app-bucket}
